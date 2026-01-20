@@ -1,6 +1,7 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 from app.core.security import hash_password, verify_password
+from app.core.jwt import create_access_token
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -43,4 +44,9 @@ def login_user(user: UserLogin):
     if not verify_password(user.password, stored_user["password"]):
         raise HTTPException(status_code=400, detail="Invalid username or password")
 
-    return {"message": "Login successful"}
+    token = create_access_token({"sub": user.username})
+
+    return {
+        "access_token": token,
+        "token_type": "bearer"
+    }
