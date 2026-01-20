@@ -1,6 +1,6 @@
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
-from app.core.security import hash_password
+from app.core.security import hash_password, verify_password
 
 router = APIRouter(prefix="/users", tags=["users"])
 
@@ -9,6 +9,11 @@ fake_users_db = {}
 
 
 class UserCreate(BaseModel):
+    username: str
+    password: str
+
+
+class UserLogin(BaseModel):
     username: str
     password: str
 
@@ -26,3 +31,16 @@ def register_user(user: UserCreate):
     }
 
     return {"message": "User registered successfully"}
+
+
+@router.post("/login")
+def login_user(user: UserLogin):
+    stored_user = fake_users_db.get(user.username)
+
+    if not stored_user:
+        raise HTTPException(status_code=400, detail="Invalid username or password")
+
+    if not verify_password(user.password, stored_user["password"]):
+        raise HTTPException(status_code=400, detail="Invalid username or password")
+
+    return {"message": "Login successful"}
